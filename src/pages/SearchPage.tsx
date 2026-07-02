@@ -1,49 +1,67 @@
-import { useState } from "react";
+import { useCallback, useDeferredValue, useState } from "react";
 import type { Platform } from "@/types";
-import { Layout } from "@/components/Layout";
-import { PlatformFilter } from "@/components/PlatformFilter";
-import { ProfileList } from "@/components/ProfileList";
-import { extractProfiles, filterProfiles } from "@/utils/dataHelpers";
+import { Layout } from "@/components/layout/Layout";
+import { ProfileList } from "@/components/profile/ProfileList";
+import { PlatformFilter } from "@/components/search/PlatformFilter";
+import { useFilteredProfiles } from "@/hooks/useFilteredProfiles";
+import { getPlatformStyle } from "@/lib/platformStyles";
 
 export function SearchPage() {
   const [platform, setPlatform] = useState<Platform>("instagram");
   const [searchQuery, setSearchQuery] = useState("");
-  const [clickCount, setClickCount] = useState(0);
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+  const isFiltering = searchQuery !== deferredSearchQuery;
+  const platformStyle = getPlatformStyle(platform);
 
-  const allProfiles = extractProfiles(platform);
-  const filtered = filterProfiles(allProfiles, searchQuery);
+  const { allProfiles, filteredProfiles } = useFilteredProfiles(
+    platform,
+    deferredSearchQuery
+  );
 
-  const handleProfileClick = (username: string) => {
-    setClickCount(clickCount + 1);
-    console.log("Clicked profile:", username, "total clicks:", clickCount);
-  };
+  const handlePlatformChange = useCallback((nextPlatform: Platform) => {
+    setPlatform(nextPlatform);
+    setSearchQuery("");
+  }, []);
 
   return (
-    <Layout title="Find Influencers">
-      <p className="text-gray-500 mb-4 text-sm">
-        Browse top creators across social platforms
-      </p>
+    <Layout
+      title="Find your next creator"
+      description="Search top influencers across social platforms, explore detailed profiles, and build your shortlist."
+    >
+      <div className="space-y-6">
+        <section className="surface-panel p-4 sm:p-6 animate-fade-in">
+          <PlatformFilter
+            selected={platform}
+            onChange={handlePlatformChange}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+          />
+        </section>
 
-      <PlatformFilter
-        selected={platform}
-        onChange={(p) => {
-          setPlatform(p);
-          setSearchQuery("");
-        }}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-      />
+        <section aria-labelledby="results-heading">
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-left">
+              <h2 id="results-heading" className="text-lg font-semibold">
+                Results
+              </h2>
+              <p
+                className={`text-sm text-[var(--color-ink-muted)] transition-opacity duration-200 ${
+                  isFiltering ? "opacity-60" : "opacity-100"
+                }`}
+                aria-live="polite"
+              >
+                Showing {filteredProfiles.length} of {allProfiles.length} on{" "}
+                <span className={`font-medium ${platformStyle.accent}`}>
+                  {platformStyle.label}
+                </span>
+                {isFiltering ? " · filtering…" : ""}
+              </p>
+            </div>
+          </div>
 
-      <p className="text-xs text-gray-400 mb-2">
-        Showing {filtered.length} of {allProfiles.length} on {platform}
-      </p>
-
-      <ProfileList
-        profiles={filtered}
-        platform={platform}
-        searchQuery={searchQuery}
-        onProfileClick={handleProfileClick}
-      />
+          <ProfileList profiles={filteredProfiles} platform={platform} />
+        </section>
+      </div>
     </Layout>
   );
 }
