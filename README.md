@@ -5,7 +5,11 @@ Technical documentation for a client-side influencer search and shortlist applic
 **Stack:** React 19 · TypeScript 6 · Vite 8 · Tailwind CSS 4 · React Router 7 · Zustand 5
 
 ---
+## Vercel Deployment
 
+You can find the deployment here: https://wobb-psi.vercel.app/
+
+---
 ## Troubleshooting for macOS Users (Apple Silicon)
 
 If you are on an M1/M2/M3 Mac and encounter a macOS security pop-up stating **"rolldown-binding.darwin-arm64.node can’t be opened because Apple cannot check it for malicious software"**, you need to clear the macOS quarantine flag on the downloaded dependencies.
